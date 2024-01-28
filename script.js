@@ -60,6 +60,7 @@ function handleResult(result) {
     var data = result[1];
 
     updateTable(data);
+    extract(data.rows, data.columns)
 }
 
 function loadQuestion(dataset, questionIndex) {
@@ -102,6 +103,7 @@ function submitSQLQueryToDomo(sqlQuery) {
 }
 
 function getTableData(data) {
+    extract(data.rows, data.columns)
     return data.rows.map(row => {
         var obj = {};
         data.columns.forEach((column, index) => {
@@ -115,7 +117,7 @@ function updateTable(data) {
     if (table != null) {
         table.destroy();
     }
-
+    extract(data.rows, data.columns)
     var options = {
         data: getTableData(data),
         layout: "fitDataFill",
@@ -153,7 +155,7 @@ function toggleButtonSpinner(el, flag) {
 async function handleQuestionSubmit(event) {
     // Prevent the form from being submitted normally
     event.preventDefault();
-
+columnChart()
     // Get the value of the question input field
     var question = questionInput.value;
 
@@ -341,3 +343,174 @@ function decodeSafeText(text) {
     div.innerHTML = makeSafeText(text);
     return div.innerText;
 }
+
+
+
+function extract(data, column){
+
+const mergedData = data.map((row) => {
+              const rowData = {};
+              column.forEach((key, index) => {
+                  rowData[key] = row[index];
+              });
+              return rowData;
+          });
+
+    columnChart(column, mergedData)
+}
+    
+function columnChart(column, datas){
+    const ques = questionInput.value.split(" ")
+   
+    const pie_mat = ['pie chart', 'pie', 'bar', 'bar chart', 'lines', 'line', 'line chart', 'lines chart', 'months', 'month', 'year', 'years', 'date', 'dates', 'today', 'yesterday', 'day', 'days', 'week', 'weeks'];
+    var chartAi = ques.filter(value => pie_mat.includes(value));
+
+        document.getElementById('chartapex').style.display = "none";
+        document.getElementById('piechartapex').style.display = "none";
+        document.getElementById('linechart').style.display = "none";
+
+    if(chartAi[0] === 'pie' || chartAi[0] === 'pie chart'){
+
+        document.getElementById('chartapex').style.display = "none";
+        document.getElementById('linechart').style.display = "none";
+        document.getElementById('piechartapex').style.display = "block";
+                var pieoptions = {
+                    series: datas ? datas?.map((val) => Number(val[column[1]])) : ['0'],
+                    chart: {
+                        width: 380,
+                        type: 'pie',
+                    },
+                    legend: {
+                        show: false,
+                    },
+
+                    labels: datas ? datas?.map((val) => val[column[0]]) : [''],
+                };
+
+                var piechart = new ApexCharts(document.querySelector("#piechartapex"), pieoptions);
+                piechart.render();
+                piechart.resetSeries()
+          piechart.updateOptions(pieoptions,true, true, true);
+
+
+    }else if (chartAi[0] === 'bar' || chartAi[0] === 'bar chart'){
+
+         document.getElementById('chartapex').style.display = "block";
+        document.getElementById('piechartapex').style.display = "none";
+        document.getElementById('linechart').style.display = "none";
+var options = {
+              series: [{
+                  name: '',
+                  data: datas ? datas?.map((val) => val[column[1]]) : ['0']
+              }],
+              chart: {
+                  type: 'bar',
+                  height: 350
+              },
+              plotOptions: {
+                  bar: {
+                      horizontal: false,
+                      columnWidth: '55%',
+                      endingShape: 'rounded'
+                  },
+              },
+              dataLabels: {
+                  enabled: false
+              },
+              stroke: {
+                  show: true,
+                  width: 2,
+                  colors: ['transparent']
+              },
+              xaxis: {
+                  categories: datas ? datas?.map((val) => val[column[0]]) : [''],
+              },
+              yaxis: {
+                  labels: {
+                    formatter: function (value) {
+                        // You can customize the formatting of the y-axis labels here
+                        return numDifferentiation(value); // For example, rounding to zero decimal places
+                    }
+                 },
+              },
+              fill: {
+                  opacity: 1
+              },
+          };
+
+          var chart = new ApexCharts(document.querySelector("#chartapex"), options);
+          chart.render();
+          chart.resetSeries([])
+          chart.updateOptions(options, true, true, true);
+    }else if (chartAi[0] === 'line' || chartAi[0] === 'lines' || chartAi[0] === 'line chart' || chartAi[0] === 'lines chart' || chartAi[0] === 'year' || chartAi[0] === 'years' || chartAi[0] === 'month' || chartAi[0] === 'months' || chartAi[0] === 'day' || chartAi[0] === 'days' || chartAi[0] === 'today' || chartAi[0] === 'yesterday' || chartAi[0] === 'week' || chartAi[0] === 'weeks'){
+
+
+        document.getElementById('chartapex').style.display = "none";
+        document.getElementById('piechartapex').style.display = "none";
+        document.getElementById('linechart').style.display = "block";
+
+                  var lineoptions = {
+                                series: [{
+                                    name: "",
+                                    data: datas ? datas?.map((val) => val[column[1]]) : ['0']
+                                }],
+                                chart: {
+                                    height: 350,
+                                    type: 'line',
+                                },
+                                dataLabels: {
+                                    enabled: false
+                                },
+                                stroke: {
+                                    curve: 'smooth'
+                                },
+                                grid: {
+                                    row: {
+                                        colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+                                        opacity: 0.5
+                                    },
+                                },
+                                xaxis: {
+                                    categories: datas ? datas?.map((val) => val[column[0]]) : [''],
+                                },
+                                yaxis: {
+                                    labels: {
+                                        formatter: function (value) {
+                                            // You can customize the formatting of the y-axis labels here
+                                            return numDifferentiation(value); // For example, rounding to zero decimal places
+                                        }
+                                    },
+                                },
+                            };
+
+                            var linecharts = new ApexCharts(document.querySelector("#linechart"), lineoptions);
+                            linecharts.render();
+                            linecharts.updateOptions(lineoptions, true, true, true);
+    }
+
+    //     const objectNames = [];
+
+    //     datas.forEach(obj => {
+    //           const keys = Object.keys(obj);
+    //           keys.forEach(key => {
+    //               if (!objectNames.includes(key)) {
+    //                   objectNames.push(key);
+    //               }
+    //           });
+    //       });
+
+    // console.log(objectNames)
+
+        
+      }
+
+
+      function numDifferentiation(val) {
+            let name = '';
+            if (val >= 10000000) {
+                val = (val / 10000000).toFixed(1) + 'Cr';
+            } else if (val >= 100000) {
+                val = (val / 100000).toFixed(1) + ' Lac'
+            }
+            return val
+        }
